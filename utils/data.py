@@ -3,12 +3,89 @@ from torchvision import datasets, transforms
 from utils.toolkit import split_images_labels
 from . import autoaugment
 from . import ops
+import os
 
 class iData(object):
     train_trsf = []
     test_trsf = []
     common_trsf = []
     class_order = None
+
+
+class imnist(iData):
+    use_path = False
+    
+    train_trsf = [
+        transforms.Resize(32),
+        transforms.Grayscale(num_output_channels=3), # Forces 1-channel to 3-channels
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+    ]
+    test_trsf = [
+        transforms.Resize(32),
+        transforms.Grayscale(num_output_channels=3),
+        transforms.ToTensor(),
+    ]
+    common_trsf = [
+        transforms.Normalize(mean=(0.1307, 0.1307, 0.1307), std=(0.3081, 0.3081, 0.3081)),
+    ]
+
+    class_order = np.arange(10).tolist()
+
+    def download_data(self):
+        data_dir = "./data"
+        # Optional but safe: ensures the workspace folder is explicitly built
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            
+        train_dataset = datasets.MNIST(data_dir, train=True, download=True)
+        test_dataset = datasets.MNIST(data_dir, train=False, download=True)
+        
+        self.train_data = train_dataset.data.numpy()
+        self.test_data = test_dataset.data.numpy()
+        
+        self.train_targets = np.array(train_dataset.targets)
+        self.test_targets = np.array(test_dataset.targets)
+
+
+class imedmnist(iData):
+    use_path = False
+    
+    train_trsf = [
+        transforms.Resize(32),
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ColorJitter(brightness=63 / 255),
+        transforms.ToTensor()
+    ]
+    test_trsf = [
+        transforms.Resize(32),
+        transforms.ToTensor()
+    ]
+    common_trsf = [
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    ]
+
+    class_order = np.arange(8).tolist()
+
+    def download_data(self):
+        # Explicit inline import for the MedMNIST package library
+        from medmnist import BloodMNIST
+        
+        data_dir = "./data"
+        # Uses the 'os' library we imported at the top of the file
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+        
+        train_dataset = BloodMNIST(split="train", download=True, root=data_dir)
+        test_dataset = BloodMNIST(split="test", download=True, root=data_dir)
+        
+        self.train_data = train_dataset.imgs
+        self.test_data = test_dataset.imgs
+        
+        self.train_targets = train_dataset.labels.flatten()
+        self.test_targets = test_dataset.labels.flatten()
 
 
 class iCIFAR10(iData):
