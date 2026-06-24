@@ -370,11 +370,13 @@ class FOSTER(BaseLearner):
         self._snet.eval()
         y_pred, y_true = [], []
         for _, (_, inputs, targets) in enumerate(test_loader):
-            inputs = inputs.to(self._device, non_blocking=True)
+            inputs,targets = inputs.to(self._device, targets.to(self._device)
             with torch.no_grad():
                 outputs = self._snet(inputs)["logits"]
+                
+            current_k=min(self.topk,outputs.shape[1])
             predicts = torch.topk(
-                outputs, k=self.topk, dim=1, largest=True, sorted=True
+                outputs, k=current_k, dim=1, largest=True, sorted=True
             )[1]
             y_pred.append(predicts.cpu().numpy())
             y_true.append(targets.cpu().numpy())
