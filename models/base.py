@@ -81,7 +81,7 @@ class BaseLearner(object):
         }
 
         ret["top1"]=top1_accuracy
-        ret["top5"]=top5_accuracy
+        ret["top5"]=topk_accuracy
 
         return ret
 
