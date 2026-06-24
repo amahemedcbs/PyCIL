@@ -93,7 +93,6 @@ class BaseLearner(object):
             with torch.no_grad():
                 outputs = self._network(inputs)["logits"]
             
-            # 1. FIXED: Prevent out-of-bounds error on early tasks
             current_k = min(self.topk, outputs.shape[1])
             
             predicts = torch.topk(
@@ -105,12 +104,10 @@ class BaseLearner(object):
         y_pred = np.concatenate(y_pred)
         y_true = np.concatenate(y_true)
         
-        # 2. FIXED: Pass the arrays to our updated dynamic evaluation logic
         cnn_accy = self._evaluate(y_pred, y_true)
         
         if hasattr(self, "_class_means") and self._class_means is not None:
-            # If your framework calculates NME, it happens here
-            nme_accy = self._compute_nme_accuracy(y_pred, y_true) # Or your framework's equivalent NME call
+            nme_accy = self._compute_nme_accuracy(y_pred, y_true) 
         else:
             nme_accy = None
 
@@ -168,7 +165,6 @@ class BaseLearner(object):
         dists = cdist(class_means, vectors, "sqeuclidean")  # [nb_classes, N]
         scores = dists.T  # [N, nb_classes], choose the one with the smallest distance
 
-        # CRITICAL FIX: Make sure topk slice never exceeds available columns
         current_k = min(self.topk, scores.shape[1])
 
         return np.argsort(scores, axis=1)[:, :current_k], y_true  # [N, current_k]
