@@ -71,13 +71,17 @@ class BaseLearner(object):
 
     def _evaluate(self, y_pred, y_true):
         ret = {}
-        grouped = accuracy(y_pred.T[0], y_true, self._known_classes)
-        ret["grouped"] = grouped
-        ret["top1"] = grouped["total"]
-        ret["top{}".format(self.topk)] = np.around(
-            (y_pred.T == np.tile(y_true, (self.topk, 1))).sum() * 100 / len(y_true),
-            decimals=2,
-        )
+        actual_k=y_pred.shape[1]
+        topk_accuracy=(y_pred.T==np.tile(y_true,(actual_k, 1))).sum()*100/len(y_true)
+        top1_accuracy=(y_pred[:,0]==y_true).sum()*100/len(y_true)
+
+        ret["grouped"]={
+            "total":topk_accuracy,
+            "0-0":topk_accuracy
+        }
+
+        ret["top1"]=top1_accuracy
+        ret["top5"]=top5_accuracy
 
         return ret
 
@@ -138,8 +142,10 @@ class BaseLearner(object):
             inputs = inputs.to(self._device)
             with torch.no_grad():
                 outputs = self._network(inputs)["logits"]
+
+            current_k=min(self.topk, outputs.shape[1])
             predicts = torch.topk(
-                outputs, k=self.topk, dim=1, largest=True, sorted=True
+                outputs, k=current_k, dim=1, largest=True, sorted=True
             )[
                 1
             ]  # [bs, topk]
