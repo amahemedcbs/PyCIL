@@ -74,7 +74,6 @@ class imedmnist(iData):
         from medmnist import BloodMNIST
         
         data_dir = "./data"
-        # Uses the 'os' library we imported at the top of the file
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
         
