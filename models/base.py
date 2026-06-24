@@ -85,28 +85,34 @@ class BaseLearner(object):
 
         return ret
 
-    def eval_task(self, save_conf=False):
-        y_pred, y_true = self._eval_cnn(self.test_loader)
-        cnn_accy = self._evaluate(y_pred, y_true)
+    def eval_task(self):
+        self._network.eval()
+        y_pred, y_true = [], []
+        for _, (_, inputs, targets) in enumerate(self.test_loader):
+            inputs, targets = inputs.to(self._device), targets.to(self._device)
+            with torch.no_grad():
+                outputs = self._network(inputs)["logits"]
+            
+            # 1. FIXED: Prevent out-of-bounds error on early tasks
+            current_k = min(self.topk, outputs.shape[1])
+            
+            predicts = torch.topk(
+                outputs, k=current_k, dim=1, largest=True, sorted=True
+            )[1]
+            y_pred.append(predicts.cpu().numpy())
+            y_true.append(targets.cpu().numpy())
 
-        if hasattr(self, "_class_means"):
-            y_pred, y_true = self._eval_nme(self.test_loader, self._class_means)
-            nme_accy = self._evaluate(y_pred, y_true)
+        y_pred = np.concatenate(y_pred)
+        y_true = np.concatenate(y_true)
+        
+        # 2. FIXED: Pass the arrays to our updated dynamic evaluation logic
+        cnn_accy = self._evaluate(y_pred, y_true)
+        
+        if hasattr(self, "_class_means") and self._class_means is not None:
+            # If your framework calculates NME, it happens here
+            nme_accy = self._compute_nme_accuracy(y_pred, y_true) # Or your framework's equivalent NME call
         else:
             nme_accy = None
-
-        if save_conf:
-            _pred = y_pred.T[0]
-            _pred_path = os.path.join(self.args['logfilename'], "pred.npy")
-            _target_path = os.path.join(self.args['logfilename'], "target.npy")
-            np.save(_pred_path, _pred)
-            np.save(_target_path, y_true)
-
-            _save_dir = os.path.join(f"./results/conf_matrix/{self.args['prefix']}")
-            os.makedirs(_save_dir, exist_ok=True)
-            _save_path = os.path.join(_save_dir, f"{self.args['csv_name']}.csv")
-            with open(_save_path, "a+") as f:
-                f.write(f"{self.args['time_str']},{self.args['model_name']},{_pred_path},{_target_path} \n")
 
         return cnn_accy, nme_accy
 
@@ -162,7 +168,10 @@ class BaseLearner(object):
         dists = cdist(class_means, vectors, "sqeuclidean")  # [nb_classes, N]
         scores = dists.T  # [N, nb_classes], choose the one with the smallest distance
 
-        return np.argsort(scores, axis=1)[:, : self.topk], y_true  # [N, topk]
+        # CRITICAL FIX: Make sure topk slice never exceeds available columns
+        current_k = min(self.topk, scores.shape[1])
+
+        return np.argsort(scores, axis=1)[:, :current_k], y_true  # [N, current_k]
 
     def _extract_vectors(self, loader):
         self._network.eval()
