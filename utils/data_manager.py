@@ -293,10 +293,11 @@ def _get_idata(dataset_name):
         return iCIFAR10_AA()
     elif name == "mnist":
         return imnist()
-    elif name == "medmnist":
-        return imedmnist()
+    elif "mnist" in name:
+      return imedmnist(dataset_name=name)
+
     else:
-        raise NotImplementedError("Unknown dataset {}.".format(dataset_name))
+        raise ValueError("Unknown dataset {}.".format(dataset_name))
 
 
 def pil_loader(path):
