@@ -68,15 +68,12 @@ class imedmnist(iData):
     ]
 
     def __init__(self, dataset_name):
-      super().__init__()
-      self.dataset_name=dataset_name.lower()
-      import medmnist
-      from medmnist import INFO
-      self.class_order=np.arange(len(INFO[self.dataset_name]["label"])).tolist()
-
+        super().__init__()
+        self.dataset_name = dataset_name.lower().strip()
+        from medmnist import INFO
+        self.class_order = np.arange(len(INFO[self.dataset_name]["label"])).tolist()
 
     def download_data(self):
-        # Explicit inline import for the MedMNIST package library
         import medmnist
         from medmnist import INFO
         
@@ -84,12 +81,13 @@ class imedmnist(iData):
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
         
+        # Pull the exact case-sensitive class capitalization from the MedMNIST metadata
+        class_name = INFO[self.dataset_name]["python_class"]
+        
+        if not hasattr(medmnist, class_name):
+            raise ValueError(f"Dataset {class_name} not found in medmnist package.")
 
-        class_name= self.dataset_name.capitalize()
-        if not hasattr(medmnist,class_name):
-          raise ValueError(f"Dataset {class_name} not found in medmnist package.")
-
-        target_class=getattr(medmnist,class_name)
+        target_class = getattr(medmnist, class_name)
 
         train_dataset = target_class(split="train", download=True, root=data_dir)
         test_dataset = target_class(split="test", download=True, root=data_dir)
@@ -100,13 +98,11 @@ class imedmnist(iData):
         self.train_targets = train_dataset.labels.flatten()
         self.test_targets = test_dataset.labels.flatten()
 
-    def _ensure_3_channels(self,data_array):
-      #expands grayscale (1 channel) to RGB (3 channel)
-      if len(data_array.shape)==3:
-        data_array=np.expand_dims(data_array,axis=-1)
-        data_array=np.repeat(data_array,3,axis=-1)
-        
-      return data_array
+    def _ensure_3_channels(self, data_array):
+        if len(data_array.shape) == 3:
+            data_array = np.expand_dims(data_array, axis=-1)
+            data_array = np.repeat(data_array, 3, axis=-1)
+        return data_array
 
 
 class iCIFAR10(iData):
