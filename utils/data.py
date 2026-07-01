@@ -72,7 +72,7 @@ class imedmnist(iData):
       self.dataset_name=dataset_name.lower()
       import medmnist
       from medmnist_config import INFO
-      self.class_order=np.arange(len(INFO[self.dataset_name]["label"]))tolist()
+      self.class_order=np.arange(len(INFO[self.dataset_name]["label"])).tolist()
 
 
     def download_data(self):
