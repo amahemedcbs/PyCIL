@@ -71,7 +71,7 @@ class imedmnist(iData):
       super().__init__()
       self.dataset_name=dataset_name.lower()
       import medmnist
-      from medmnist_config import INFO
+      from medmnist import INFO
       self.class_order=np.arange(len(INFO[self.dataset_name]["label"])).tolist()
 
 
