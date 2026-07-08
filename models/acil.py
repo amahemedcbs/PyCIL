@@ -336,7 +336,15 @@ def _evaluate(
 
         logits: torch.Tensor = model(X)
         acc1_cnt += (logits.argmax(dim=1) == y).sum().item()
-        acc5_cnt += (logits.topk(5, dim=1).indices == y[:, None]).sum().item()
+        
+        # --- CHANGE THIS BLOCK TO HANDLE SMALL CLASS NUMBERS ---
+        if logits.size(1) >= 5:
+            acc5_cnt += (logits.topk(5, dim=1).indices == y[:, None]).sum().item()
+        else:
+            # Fallback to Top-1 matching if K is out of range
+            acc5_cnt += (logits.argmax(dim=1) == y).sum().item()
+        # -------------------------------------------------------
+        
         sample_cnt += y.size(0)
         total_loss += float(criterion(logits, y).item())
 
