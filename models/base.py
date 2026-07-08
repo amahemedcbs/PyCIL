@@ -52,8 +52,14 @@ class BaseLearner(object):
             return self._network.feature_dim
 
     def build_rehearsal_memory(self, data_manager, per_class):
+        # --- ADD THIS ZERO-MEMORY BYPASS ---
+        if per_class == 0:
+            logging.info("Exemplar-free mode detected. Skipping rehearsal memory building.")
+            return
+        # -----------------------------------
+
         if self._fixed_memory:
-            self._construct_exemplar_unified(data_manager, per_class)
+            self._construct_exemplar(data_manager, per_class)
         else:
             self._reduce_exemplar(data_manager, per_class)
             self._construct_exemplar(data_manager, per_class)
