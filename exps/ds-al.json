@@ -33,6 +33,21 @@
                 "decay": 0.1
             }
         },
+            "dermamnist": {
+            "buffer_size": 8192,
+            "gamma": 0.1,
+            "gamma_comp": 0.1,
+            "compensation_ratio": 0.6,
+            "init_weight_decay": 0.0005,
+            "scheduler": {
+                "type": "MultiStep",
+                "init_lr": 0.1,
+                "init_epochs": 160,
+                "warmup": 0,
+                "milestones": [120, 140],
+                "decay": 0.1
+            }
+        },
         "imagenet1000": {
             "buffer_size": 16384,
             "gamma": 0.1,
