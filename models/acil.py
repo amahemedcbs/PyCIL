@@ -63,7 +63,13 @@ class ACIL(BaseLearner):
         Advances in Neural Information Processing Systems 35 (2022): 11602-11614.
     """
     def __init__(self, args: Dict[str, Any]) -> None:
-        args.update(args["configurations"][args["dataset"]])
+        target_dataset=args["dataset"].lower().strip()
+
+        if "mnist" in target_dataset and target_dataset != "mnist":
+          args.update(args["configurations"]["cifar100"])
+          
+        else:
+          args.update(args["configurations"][target_dataset])
 
         if "memory_size" not in args:
             args["memory_size"] = 0
