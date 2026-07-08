@@ -263,7 +263,14 @@ class MEMO(BaseLearner):
         torch.save(save_dict, "{}_{}.pkl".format(checkpoint_name, self._cur_task))
     
     def _construct_exemplar(self, data_manager, m):
+        
         logging.info("Constructing exemplars...({} per classes)".format(m))
+        
+        # --- ADD THIS SAFE RETURN BLOCK RIGHT HERE ---
+        if m == 0:
+            return
+        # ---------------------------------------------
+        
         for class_idx in range(self._known_classes, self._total_classes):
             data, targets, idx_dataset = data_manager.get_dataset(
                 np.arange(class_idx, class_idx + 1),
@@ -271,6 +278,7 @@ class MEMO(BaseLearner):
                 mode="test",
                 ret_data=True,
             )
+            # ... rest of your code stays exactly the same ...
             idx_loader = DataLoader(
                 idx_dataset, batch_size=batch_size, shuffle=False, num_workers=4
             )
